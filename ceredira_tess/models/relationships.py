@@ -1,17 +1,18 @@
-from ceredira_tess.db import db
+from sqlalchemy import Column, Integer, ForeignKey, Table
 
+from ceredira_tess.database import Base
 
-roles_users = db.Table('roles_users', db.Model.metadata,
-                       db.Column('user_id', db.Integer(), db.ForeignKey('user.id')),
-                       db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
+roles_users = Table('roles_users', Base.metadata,
+                    Column('user_id', Integer(), ForeignKey('user.id')),
+                    Column('role_id', Integer(), ForeignKey('role.id'))
+                    )
+
+roles_agents = Table('roles_agents', Base.metadata,
+                     Column('role_id', Integer, ForeignKey('role.id')),
+                     Column('agent_id', Integer, ForeignKey('agent.id'))
+                     )
+
+agents_scripts = Table('agents_scripts', Base.metadata,
+                       Column('agent_id', Integer, ForeignKey('agent.id')),
+                       Column('script_id', Integer, ForeignKey('script.id'))
                        )
-
-roles_agents = db.Table('roles_agents', db.Model.metadata,
-                        db.Column('role_id', db.Integer, db.ForeignKey('role.id')),
-                        db.Column('agent_id', db.Integer, db.ForeignKey('agent.id'))
-                        )
-
-agents_scripts = db.Table('agents_scripts', db.Model.metadata,
-                          db.Column('agent_id', db.Integer, db.ForeignKey('agent.id')),
-                          db.Column('script_id', db.Integer, db.ForeignKey('script.id'))
-                          )

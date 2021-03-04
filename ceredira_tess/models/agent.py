@@ -2,24 +2,28 @@ import logging
 import os
 import subprocess
 
-from ceredira_tess.db import db
+from sqlalchemy import Column, Integer, String, ForeignKey, Text
+from sqlalchemy.orm import relationship, backref
+
+from ceredira_tess.database import Base, db_session
 from ceredira_tess.models import relationships
 
 
-class Agent(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    hostname = db.Column(db.String(128), nullable=False, unique=True)
-    description = db.Column(db.Text)
-    lock_cause = db.Column(db.Text)
+class Agent(Base):
+    __tablename__ = 'agent'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    hostname = Column(String(128), nullable=False, unique=True)
+    description = Column(Text)
+    lock_cause = Column(Text)
 
-    lock_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    lock_user = db.relationship('User', backref=db.backref('agents', lazy='dynamic'))
+    lock_user_id = Column(Integer, ForeignKey('user.id'))
+    lock_user = relationship('User', backref=backref('agents', lazy='dynamic'))
 
-    operationsystemtype_id = db.Column(db.Integer, db.ForeignKey('operation_system_type.id'),
-                                       nullable=False)
-    operationsystemtype = db.relationship('OperationSystemType', backref=db.backref('agents', lazy='dynamic'))
-    scripts = db.relationship('Script', secondary=relationships.agents_scripts)
-    roles = db.relationship("Role", secondary=relationships.roles_agents, back_populates='agents')
+    operationsystemtype_id = Column(Integer, ForeignKey('operationsystemtype.id'),
+                                    nullable=False)
+    operationsystemtype = relationship('OperationSystemType', backref=backref('agents', lazy='dynamic'))
+    scripts = relationship('Script', secondary=relationships.agents_scripts)
+    roles = relationship("Role", secondary=relationships.roles_agents, back_populates='agents')
 
     def __repr__(self):
         return f'{self.hostname}'
@@ -37,7 +41,7 @@ class Agent(db.Model):
             if self.lock_user is None:
                 self.lock_user = lock_user
                 self.lock_cause = lock_cause
-                db.session.commit()
+                db_session.commit()
                 return True, f'Agent {self.hostname} locked'
             elif self.lock_user == lock_user:
                 return False, f'Agent {self.hostname} already locked by you, but with a cause: {self.lock_cause}'
@@ -55,7 +59,7 @@ class Agent(db.Model):
                 if self.lock_cause == lock_cause:
                     self.lock_user = None
                     self.lock_cause = None
-                    db.session.commit()
+                    db_session.commit()
                     return True, f'Agent {self.hostname} unlocked'
                 else:
                     return False, f'Cannot unlock agent {self.hostname}, locked with another cause: {self.lock_cause}'

@@ -14,7 +14,7 @@ from flask_security.utils import config_value, url_for_security, get_message, ha
 from markupsafe import Markup
 from wtforms import form, fields, validators, StringField, PasswordField, BooleanField, SubmitField
 
-from ceredira_tess.db import db
+from ceredira_tess.database import db_session
 from ceredira_tess.models.role import Role
 from ceredira_tess.models.user import User
 
@@ -25,7 +25,7 @@ class RegistrationForm(form.Form):
     password = fields.PasswordField(validators=[validators.required()])
 
     def validate_login(self, field):
-        if db.session.query(User).filter_by(username=self.username.data).count() > 0:
+        if db_session.query(User).filter_by(username=self.username.data).count() > 0:
             raise validators.ValidationError('Duplicate username')
 
 
@@ -259,9 +259,9 @@ class LoginForm(Form, NextFormMixin):
             return False
         self.requires_confirmation = requires_confirmation(self.user)
         if self.requires_confirmation:
-            self.email.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
+            self.username.errors.append(get_message("CONFIRMATION_REQUIRED")[0])
             return False
         if not self.user.is_active:
-            self.email.errors.append(get_message("DISABLED_ACCOUNT")[0])
+            self.username.errors.append(get_message("DISABLED_ACCOUNT")[0])
             return False
         return True
